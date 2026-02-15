@@ -18,9 +18,58 @@ type Post struct {
 	CreatedAt string    `json:"created_at"`
 	UpdatedAt string    `json:"updated_at"`
 	Comments  []Comment `json:"comments"`
+	User      User      `json:"user"`
+}
+
+type PostWithMetadata struct {
+	Post
+	CommentsCount int `json:"comments_count"`
 }
 type PostStore struct {
 	db *sql.DB
+}
+
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetadata, error) {
+	query := `
+		SELECT p.id, p.user_id, p.content, p.title,p.created_at, p.version, p.tags, u.username,
+			   COUNT(c.id) as comments_count
+		FROM posts p LEFT JOIN comments c ON p.id = c.post_id
+					 LEFT JOIN users u ON p.user_id = u.id
+					 JOIN Followers f ON f.follower_id = p.user_id OR p.user_id = $1
+		WHERE f.user_id = $1 OR p.user_id = $1
+		GROUP BY p.id, u.username
+		ORDER BY p.created_at DESC
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	var feeds []PostWithMetadata
+	for rows.Next() {
+		var p PostWithMetadata
+		err := rows.Scan(
+			&p.ID,
+			&p.UserID,
+			&p.Content,
+			&p.Title,
+			&p.CreatedAt,
+			&p.Version,
+			pq.Array(&p.Tags),
+			&p.User.Username,
+			&p.CommentsCount,
+		)
+		feeds = append(feeds, p)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return feeds, nil
 }
 
 func (s *PostStore) Create(ctx context.Context, post *Post) error {
