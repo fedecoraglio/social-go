@@ -64,7 +64,7 @@ func (app *Application) createPostsHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (app *Application) getPostsHandler(w http.ResponseWriter, r *http.Request) {
-	post := getPostFromContext(r)
+	post := app.getPostFromContext(r)
 	if post == nil {
 		app.notFoundResponseError(w, r, store.ErrNotFound)
 		return
@@ -106,7 +106,7 @@ func (app *Application) deletePostHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *Application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
-	post := getPostFromContext(r)
+	post := app.getPostFromContext(r)
 
 	var payload UpdatePostPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -166,7 +166,7 @@ func (app *Application) postsContextMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getPostFromContext(r *http.Request) *store.Post {
+func (app *Application) getPostFromContext(r *http.Request) *store.Post {
 	post, ok := r.Context().Value(postKeyContext).(*store.Post)
 	if !ok || post == nil {
 		return nil

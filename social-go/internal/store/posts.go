@@ -70,6 +70,9 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 func (s *PostStore) Delete(ctx context.Context, postId int64) error {
 	query := `DELETE FROM posts WHERE ID = $1`
 
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	res, err := s.db.ExecContext(ctx, query, postId)
 	if err != nil {
 		return err
