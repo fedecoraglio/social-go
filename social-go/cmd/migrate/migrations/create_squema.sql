@@ -26,3 +26,11 @@ CREATE TABLE IF NOT EXISTS comments(
     content TEXT NOT NULL,
     created_at timestamp(0) with time zone NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS followers (
+     id BIGSERIAL PRIMARY KEY,
+     user_id BIGINT NOT NULL REFERENCES users(id),
+     follower_id BIGINT NOT NULL REFERENCES users(id),
+     created_at TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW(),
+     CONSTRAINT followers_user_follower_unique UNIQUE (user_id, follower_id)
+);
