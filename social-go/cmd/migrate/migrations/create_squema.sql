@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS posts(
                                     user_id BIGINT REFERENCES users(id),
                                     content TEXT NOT NULL,
                                     version int NOT NULL DEFAULT 0,
+                                    tags TEXT[],
                                     created_at timestamp(0) with time zone NOT NULL DEFAULT NOW(),
                                     updated_at timestamp(0) with time zone NOT NULL DEFAULT NOW()
 );
